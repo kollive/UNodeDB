@@ -119,7 +119,7 @@ var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
 });
 passport.use(strategy);
 //const env = require("env.js");
-var PORT = process.env.PORT || 4000;
+var PORT = process.env.PORT || 3002;
 var http = require('http');
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -137,7 +137,7 @@ app.use('*', function (req, res, next) {
     res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept,Authorization,Access-Control-Allow-Origin,Access-Control-Allow-Credentials");
     res.header("Access-Control-Allow-Credentials", true);
-    res.header("Transfer-Encoding", "chunked");
+    //res.header("Transfer-Encoding", "chunked");
     //res.header("Content-Type", "text/plain");
     //res.header("Content-Type", "application/json");
     res.io = app.io;
@@ -480,12 +480,21 @@ app.post("/reactlogin", function (req, res) {
 });
 app.io = io.sockets.on('connection', function (socket) {
     console.log('a user connected');
+    //send Ping to client connection
+    socket.emit('ping', { type: 'INCOMING_PONG_PAYLOAD', payload: 'ping from server' });
     // receive from client (index.ejs) with socket.on
     socket.on('add-message', function (msg) {
-        console.log('new message: ' + msg);
+        console.log('new add message: ' + msg);
         // send to client (index.ejs) with app.io.emit
         // here it reacts direct after receiving a message from the client
-        app.io.emit('chat-message', msg);
+        //app.io.emit('chat-message', msg);
+    });
+    socket.on('pong-message', function (data) {
+        console.log('new pong message: ' + data);
+        //socket.emit('ping', { type: 'INCOMING_PONG_PAYLOAD', payload: 'pong response from server' });
+        // send to client (index.ejs) with app.io.emit
+        // here it reacts direct after receiving a message from the client
+        //app.io.emit('chat-message', msg);
     });
 });
 /*

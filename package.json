@@ -6,7 +6,7 @@
   "scripts": {
     "typings": "typings",
     "tsc": "tsc",
-    "start": "npm run tsc && node out/index.js"
+    "start": "npm run tsc && node out/index.js"    
   },
   "repository": {
     "type": "git",
@@ -32,6 +32,7 @@
     "mysql": "^2.12.0",
     "passport": "^0.3.2",
     "passport-jwt": "^2.2.1",
+    "pm2": "^2.6.1",
     "save": "^2.3.0",
     "typescript": "^2.1.4",
     "typings": "^2.1.0",

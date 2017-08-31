@@ -46,6 +46,12 @@ var config = require("config");
 var username = require("username");
 var os = require("os");
 var EventEmitter = require("events");
+var winston = require('winston');
+require('winston-mssql');
+winston.add(winston.transports.mssql, {
+    connectionString: "mssql://hvssql:hvssql@35.185.106.158/hvs",
+    table: "tNodeLogs"
+});
 //class MyEmitter extends EventEmitter{}
 /*
 myEmitter.on('event', () => {
@@ -435,6 +441,7 @@ var Dbase = (function (_super) {
         //console.log(req.body)
         var SQL = req.body.SQL;
         console.log(SQL);
+        winston.log('info', "Message.SQL=", SQL.replace(/'/g, ""));
         var headerSent = false;
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
         //5.

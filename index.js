@@ -18,7 +18,15 @@ const Grid = require('gridfs-stream');
 Grid.mongo = mongoose.mongo;
 const gfs = Grid(conn.db);
 
+/*
+var winston = require('winston');
+require('winston-mssql');
 
+winston.add(winston.transports.mssql, {
+    connectionString: "mssql://hvssql:hvssql@35.185.106.158/hvs",
+    table: "tNodeLogs"
+});
+*/
 /*
 var MongoClient = require('mongodb').MongoClient,
     assert = require('assert');
@@ -117,10 +125,11 @@ app.use('*', function (req, res, next) {
     //res.header("Transfer-Encoding", "chunked");
     //res.header("Content-Type", "text/plain");
     //res.header("Content-Type", "application/json");
-    res.io = app.io;
+    res.io = app.io;    
     //res.header("Accept", "q=0.8;application/json;q=0.9"); ,
     //res.header("Connection", "keep-alive");
     console.log('Time:', Date.now())
+    //winston.log('info', "Message.", "Root");
     next()
 });
 

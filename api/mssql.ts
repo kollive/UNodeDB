@@ -8,6 +8,14 @@ import * as username from "username";
 import * as os from "os";
 import * as EventEmitter from "events";
 
+var winston = require('winston');
+require('winston-mssql');
+
+winston.add(winston.transports.mssql, {
+    connectionString: "mssql://hvssql:hvssql@35.185.106.158/hvs",
+    table: "tNodeLogs"
+});
+
 //class MyEmitter extends EventEmitter{}
 /*
 myEmitter.on('event', () => {
@@ -513,6 +521,9 @@ export class Dbase extends EventEmitter {
         //console.log(req.body)
         let SQL = req.body.SQL;
         console.log(SQL);
+
+        
+        winston.log('info', "Message.SQL=", SQL.replace(/'/g,""));        
         let headerSent : boolean = false;
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
         //5.

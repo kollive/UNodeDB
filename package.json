@@ -6,7 +6,7 @@
   "scripts": {
     "typings": "typings",
     "tsc": "tsc",
-    "start": "npm run tsc && node out/index.js"    
+    "start": "npm run tsc && node out/index.js"
   },
   "repository": {
     "type": "git",
@@ -36,7 +36,9 @@
     "save": "^2.3.0",
     "typescript": "^2.1.4",
     "typings": "^2.1.0",
-    "username": "^2.3.0"
+    "username": "^2.3.0",
+    "winston": "^2.3.1",
+    "winston-mssql": "^0.1.1"
   },
   "devDependencies": {
     "@types/node": "^7.0.12"

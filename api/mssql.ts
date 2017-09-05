@@ -1,4 +1,4 @@
-import {Router, Request, Response, NextFunction} from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import * as mssql from "mssql";
 import * as stream from "stream";
 import * as _ from "lodash";
@@ -53,13 +53,13 @@ const _getTimeStamp = () => {
     return ((now.getMonth() + 1) + '/' + (now.getDate()) + '/' + now.getFullYear() + " " + now.getHours() + ':' + ((now.getMinutes() < 10)
         ? ("0" + now.getMinutes())
         : (now.getMinutes())) + ':' + ((now.getSeconds() < 10)
-        ? ("0" + now.getSeconds())
-        : (now.getSeconds())));
+            ? ("0" + now.getSeconds())
+            : (now.getSeconds())));
 };
 
 interface Parms {
-    gs_name : any;
-    gs_value : any
+    gs_name: any;
+    gs_value: any
 }
 
 export class Dbase extends EventEmitter {
@@ -77,14 +77,23 @@ export class Dbase extends EventEmitter {
     };
     */
 
-    async execSP(sqlProc : string, parms : any) {
+    //async execSP(sqlProc : string, parms : any) {
+    public async execSP(requ: Request, resp: Response, next?: Function) {
+        //async execSQl(sql : string) {
+        //4. console.log(req.body) let SQL = req.body.SQL;
+        console.log("execSP")
+        let sqlProc = requ.body.spName;
+        let parms = JSON.parse(JSON.stringify(requ.body.parms));
+        
+        //let SQL = requ.body.SQL;
+
         //4.
-        let headerSent : boolean = false;
+        let headerSent: boolean = false;
         let gs_start_tm = _getTimeStamp(); //func.getTimeStamp();//this._getTimeStamp;
-        let errDesc : string = ""
-        let gs_Err : string = ""
-        let parm : string = "";
-        let gs_end_tm : string = ""
+        let errDesc: string = ""
+        let gs_Err: string = ""
+        let parm: string = "";
+        let gs_end_tm: string = ""
 
         // this.emit('error', new Error('whoops!')); var dbConn = new
         // mssql.Connection(config.get(env + ".dbConfig"));
@@ -102,23 +111,23 @@ export class Dbase extends EventEmitter {
             //transaction.begin(err =>  {
             await transaction.begin()
             //console.log("in transaction")
-            
+
             result = await transaction
                 .request()
                 .input("gs_sp_name", sqlProc)
                 .execute('sps_getSPParmNames');
-  
-            console.log(result)            
-            
-            let hasOutput : boolean = false;
-            let output_parm : any = "";
-            
-            req = await transaction.request();                
+
+            console.log(result)
+
+            let hasOutput: boolean = false;
+            let output_parm: any = "";
+
+            req = await transaction.request();
             //req.multiple = true;
 
             //if (result[0].length > 0) {
             if (result.recordsets.length > 0) {
-                                
+
                 let cnt = 0;
                 result.recordset.forEach((val) => {
                     let rec = JSON.parse(JSON.stringify(val));
@@ -149,14 +158,14 @@ export class Dbase extends EventEmitter {
             let data = await req.execute(sqlProc)
             gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
             console.log(data)
-                            
+
             /*                            
             if(sqlProc == "spi_teobj") {                     
                 data = await req.execute(sqlProc)
             }                
             */
-                                          
-            let retObject : any = {}
+
+            let retObject: any = {}
             retObject.errCode = "0"
             retObject.errDesc = "";
             retObject.data = data.recordsets;
@@ -166,9 +175,9 @@ export class Dbase extends EventEmitter {
                 retObject.output = data.output;
             } else {
                 retObject.output = {};
-            }                
+            }
             //pool.close()
-            
+
             //Log the database call                
             req = await transaction.request();
 
@@ -186,19 +195,23 @@ export class Dbase extends EventEmitter {
             req.input("gs_transaction_id", "0");
 
             let tmpData = await req.execute("spi_tdblog_1")
-            await transaction.commit()                
+            await transaction.commit()
             //console.log(data)
             mssql.close()
-            
-            return JSON.stringify(retObject);
-                        
+
+            return resp
+            .status(200)
+            .send(JSON.stringify(retObject));
+
+            //return JSON.stringify(retObject);
+
         } catch (err) {
             //9. console.log(err);                        
-            await transaction.rollback(() =>{
+            await transaction.rollback(() => {
                 console.log("%%%")
                 //console.log(err)                
             })
-            
+
             //console.log(err.message);
             errDesc = err.message;
             gs_Err = "-100"
@@ -221,15 +234,18 @@ export class Dbase extends EventEmitter {
 
             let tmpData = await req.execute("spi_tdblog_1")
 
-            let errObject : any = {}
+            let errObject: any = {}
             errObject.errCode = "-100"
             errObject.errDesc = errDesc;
             errObject.data = [];
             errObject.returnValue = "0";
             errObject.output = {};
 
-            mssql.close()
-            return JSON.stringify(errObject);
+            mssql.close();
+            return resp
+            .status(200)
+            .send(JSON.stringify(errObject));
+            //return JSON.stringify(errObject);
         };
         /*
         try {
@@ -350,17 +366,19 @@ export class Dbase extends EventEmitter {
         */
     }
 
-    async execSQl(sql : string) {
+    public async execSQl(requ: Request, resp: Response, next?: Function) {
+        //async execSQl(sql : string) {
         //4. console.log(req.body) let SQL = req.body.SQL;
         console.log("execSQL")
-        let SQL = sql;
+        let SQL = requ.body.SQL;
+
         console.log(SQL);
-        let headerSent : boolean = false;
+        let headerSent: boolean = false;
         let gs_start_tm = _getTimeStamp(); //func.getTimeStamp();//this._getTimeStamp;
-        let errDesc : string = ""
-        let gs_Err : string = ""
-        let parm : string = "";
-        let gs_end_tm : string = ""
+        let errDesc: string = ""
+        let gs_Err: string = ""
+        let parm: string = "";
+        let gs_end_tm: string = ""
         let rolledBack = false;
         let transaction;
 
@@ -381,7 +399,8 @@ export class Dbase extends EventEmitter {
             await transaction.commit()
 
             gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
-            let retObject : any = {}
+
+            let retObject: any = {}
             retObject.errCode = "0"
             retObject.errDesc = "";
             retObject.data = data.recordsets;
@@ -406,8 +425,12 @@ export class Dbase extends EventEmitter {
 
             let tmpData = await res.execute("spi_tdblog_1")
             mssql.close()
-            //console.log(data) let data = await request.query(SQL)
-            return JSON.stringify(retObject);
+            console.log(data)
+            //let data = await request.query(SQL)
+            //return JSON.stringify(retObject);
+            return resp
+            .status(200)
+            .send(JSON.stringify(retObject));
         } catch (err) {
             //9. console.log(err);
             await transaction.rollback()
@@ -433,7 +456,7 @@ export class Dbase extends EventEmitter {
 
             let tmpData = await req.execute("spi_tdblog_1")
 
-            let errObject : any = {}
+            let errObject: any = {}
             errObject.errCode = "-100"
             errObject.errDesc = errDesc;
             errObject.data = [];
@@ -442,12 +465,15 @@ export class Dbase extends EventEmitter {
 
             //throw new Error("Error Occured");
             mssql.close()
-            return JSON.stringify(errObject);
+            //return JSON.stringify(errObject);
+            return resp
+            .status(200)
+            .send(JSON.stringify(errObject));
         };
     }
 
 
-    public eSQL(req : Request, res : Response, next?: Function) {
+    public eSQL(req: Request, res: Response, next?: Function) {
         /*
         let config = {
             server: '10.2.1.35',
@@ -460,7 +486,7 @@ export class Dbase extends EventEmitter {
         //4. console.log(req.body)
         let SQL = "select top 1 gs_document_name, gs_document from tleaveappdocs";
         console.log(SQL);
-        let headerSent : boolean = false;
+        let headerSent: boolean = false;
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
         //5.
         dbConn
@@ -468,16 +494,16 @@ export class Dbase extends EventEmitter {
             .then(function () {
                 //6. let strm = stream.Writable;
                 var request = new mssql.Request(dbConn);
-                let data : any[] = [];
-                let i : number = 1;
-                
+                let data: any[] = [];
+                let i: number = 1;
+
                 request
                     .query(SQL)
                     .then(function (data) {
                         //res.send(200,JSON.stringify(recordSet));
                         console.log(data);
-                         
-                        let retObject : any = {}
+
+                        let retObject: any = {}
                         retObject.errCode = "0"
                         retObject.errDesc = "";
                         retObject.data = data.recordsets;
@@ -486,7 +512,7 @@ export class Dbase extends EventEmitter {
 
                         dbConn.close();
 
-                        return  data.recordsets[0];
+                        return data.recordsets[0];
                         //res
                         //    .status(200)
                         //    .send(JSON.stringify(retObject));
@@ -505,7 +531,7 @@ export class Dbase extends EventEmitter {
     }
 
 
-    public executeSQl(req : Request, res : Response, next?: Function) {
+    public executeSQl(req: Request, res: Response, next?: Function) {
         /*
         let config = {
             server: '10.2.1.35',
@@ -522,9 +548,9 @@ export class Dbase extends EventEmitter {
         let SQL = req.body.SQL;
         console.log(SQL);
 
-        
-        winston.log('info', "Message.SQL=", SQL.replace(/'/g,""));        
-        let headerSent : boolean = false;
+
+        winston.log('info', "Message.SQL=", SQL.replace(/'/g, ""));
+        let headerSent: boolean = false;
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
         //5.
         dbConn
@@ -532,8 +558,8 @@ export class Dbase extends EventEmitter {
             .then(function () {
                 //6. let strm = stream.Writable;
                 var request = new mssql.Request(dbConn);
-                let data : any[] = [];
-                let i : number = 1;
+                let data: any[] = [];
+                let i: number = 1;
 
                 /*
                 request.stream = true; // You can set streaming differently for each request
@@ -566,15 +592,15 @@ export class Dbase extends EventEmitter {
                     dbConn.close();
                 });
                 //7.
-.query("select count(*) as 'count' from trptdata where gs_fy_yy = '2017' and " + SQL)
+                    .query("select count(*) as 'count' from trptdata where gs_fy_yy = '2017' and " + SQL)
                 */
                 request
                     .query(SQL)
                     .then(function (data) {
                         //res.send(200,JSON.stringify(recordSet));
                         console.log(data);
-                         
-                        let retObject : any = {}
+
+                        let retObject: any = {}
                         retObject.errCode = "0"
                         retObject.errDesc = "";
                         retObject.data = data.recordsets;
@@ -582,7 +608,7 @@ export class Dbase extends EventEmitter {
                         retObject.output = {};
 
                         dbConn.close();
-                         res
+                        res
                             .status(200)
                             .send(JSON.stringify(retObject));
                     })
@@ -599,7 +625,7 @@ export class Dbase extends EventEmitter {
             });
     }
 
-    public loadEmployees(req : Request, res : Response, next?: Function) {
+    public loadEmployees(req: Request, res: Response, next?: Function) {
         /*
         let config = {
             server: '10.2.1.35',
@@ -610,7 +636,7 @@ export class Dbase extends EventEmitter {
         };
         */
         //4.
-        let headerSent : boolean = false;
+        let headerSent: boolean = false;
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
         //5.
         dbConn
@@ -618,14 +644,14 @@ export class Dbase extends EventEmitter {
             .then(function () {
                 //6. let strm = stream.Writable;
                 var request = new mssql.Request(dbConn);
-                let data : any[] = [];
-                let i : number = 1;
+                let data: any[] = [];
+                let i: number = 1;
 
                 request.stream = true; // You can set streaming differently for each request
                 //request.query("select distinct gs_pr_name from ttodetail where gs_fy_yy= '2017' and isnull(gs_pr_name,'') <> ''"); // or request.execute(procedure);
                 request.query("select distinct top 15000 gs_pr_name ,gs_ttl_i,gs_oru_i,gs_assign_fte,gs_assign_" +
-                        "eff_d,gs_bdgt_amt from ttodetail where gs_fy_yy= '2017' and isnull(gs_pr_name,''" +
-                        ") <> '' "); // or request.execute(procedure);
+                    "eff_d,gs_bdgt_amt from ttodetail where gs_fy_yy= '2017' and isnull(gs_pr_name,''" +
+                    ") <> '' "); // or request.execute(procedure);
 
                 /*
             // Simple writable stream that delays 1 sec before console.log and callback();
@@ -751,7 +777,7 @@ export class Dbase extends EventEmitter {
             });
     }
 
-    public executeSP(req : Request, res : Response, next?: Function) {
+    public executeSP(req: Request, res: Response, next?: Function) {
         //2.
         //var dbConn = new mssql.Connection(config.get(env + ".dbConfig"));
         let spName = req.body.spName;
@@ -765,13 +791,13 @@ export class Dbase extends EventEmitter {
 
         console.log(spName);
 
-        let headerSent : boolean = false;
+        let headerSent: boolean = false;
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
         let gs_start_tm = _getTimeStamp(); //func.getTimeStamp();//this._getTimeStamp;
-        let errDesc : string = ""
-        let gs_Err : string = ""
-        let parm : string = "";
-        let gs_end_tm : string = ""
+        let errDesc: string = ""
+        let gs_Err: string = ""
+        let parm: string = "";
+        let gs_end_tm: string = ""
         var request;
 
         dbConn
@@ -782,12 +808,12 @@ export class Dbase extends EventEmitter {
                 request = new mssql.Request(dbConn);
 
                 //console.log(value)
-                let keyArr : any[] = Object.keys(parms);
+                let keyArr: any[] = Object.keys(parms);
                 console.log(keyArr);
 
                 // loop through the object, pushing values to the return array
 
-                keyArr.forEach((key : any) => {
+                keyArr.forEach((key: any) => {
                     console.log(key)
                     parm += "'" + parms[key] + "',"
                     request.input(key, parms[key]);
@@ -805,7 +831,7 @@ export class Dbase extends EventEmitter {
                 */
 
                 request
-                //.input('Salary', mssql.Int, 50000)
+                    //.input('Salary', mssql.Int, 50000)
                     .execute(spName)
                     .then(function (data) {
                         //4.
@@ -818,14 +844,14 @@ export class Dbase extends EventEmitter {
                         console.log(gs_end_tm)
                         console.log(errDesc)
 
-                        let retObject : any = {}
+                        let retObject: any = {}
                         retObject.errCode = "0"
                         retObject.errDesc = "";
                         retObject.data = data.recordsets;
                         retObject.returnValue = data.returnValue;
                         //console.log("output")
                         retObject.output = data.output;
-                        
+
                         //Log the database call
                         request = new mssql.Request(dbConn);
 
@@ -843,7 +869,7 @@ export class Dbase extends EventEmitter {
                         request.input("gs_transaction_id", "0");
 
                         request
-                        //.input('Salary', mssql.Int, 50000)
+                            //.input('Salary', mssql.Int, 50000)
                             .execute("spi_tdblog_1")
                             .then(function (recordSet) {
                                 //4.
@@ -889,7 +915,7 @@ export class Dbase extends EventEmitter {
                         request.input("gs_transaction_id", "0");
 
                         request
-                        //.input('Salary', mssql.Int, 50000)
+                            //.input('Salary', mssql.Int, 50000)
                             .execute("spi_tdblog_1")
                             .then(function (recordSet) {
                                 //4.
@@ -902,7 +928,7 @@ export class Dbase extends EventEmitter {
                                 dbConn.close();
                             });
 
-                        let errObject : any = {}
+                        let errObject: any = {}
                         errObject.errCode = "-100"
                         errObject.errDesc = errDesc;
 
@@ -918,7 +944,7 @@ export class Dbase extends EventEmitter {
             });
     }
 
-    public insertRow(req : Request, res : Response, next?: Function) {
+    public insertRow(req: Request, res: Response, next?: Function) {
         //2.
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
         //3.
@@ -936,7 +962,7 @@ export class Dbase extends EventEmitter {
                         //7.
                         request
                             .query("Insert into EmployeeInfo (EmpName,Salary,DeptName,Designation) values ('T.M. Sab" +
-                                    "nis',13000,'Accounts','Lead')")
+                            "nis',13000,'Accounts','Lead')")
                             .then(function () {
                                 //8.
                                 transaction
@@ -970,16 +996,16 @@ export class Dbase extends EventEmitter {
             });
     }
 
-    public get(req : Request, res : Response, next?: NextFunction) {
+    public get(req: Request, res: Response, next?: NextFunction) {
         //let data = db.get(); res.send(200, { data });
         res.send(200, "Hello");
     }
 
-    public getUser(req : Request, res : Response, next?: Function) {
+    public getUser(req: Request, res: Response, next?: Function) {
         let userid = req.params.userid;
         let pwd = req.params.pwd;
 
-        var con = mssql.createConnection({host: "127.0.0.1", database: "mygalaxy", user: "root", password: "", multipleStatements: true});
+        var con = mssql.createConnection({ host: "127.0.0.1", database: "mygalaxy", user: "root", password: "", multipleStatements: true });
 
         /*
     var con = mssql.createConnection({
@@ -1021,7 +1047,7 @@ export class Dbase extends EventEmitter {
         //res.send(200, db.get(id));
     }
 
-    public addUser(req : Request, res : Response, next?: Function) {
+    public addUser(req: Request, res: Response, next?: Function) {
         let userid = req.params.userid;
         let pwd = req.params.pwd;
         let fname = req.params.fname;
@@ -1029,7 +1055,7 @@ export class Dbase extends EventEmitter {
         let age = req.params.age;
         let address = req.params.address;
 
-        var con = mssql.createConnection({host: "127.0.0.1", database: "mygalaxy", user: "root", password: "welcome", multipleStatements: true});
+        var con = mssql.createConnection({ host: "127.0.0.1", database: "mygalaxy", user: "root", password: "welcome", multipleStatements: true });
 
         con.connect(function (err) {
             if (err) {
@@ -1062,16 +1088,16 @@ export class Dbase extends EventEmitter {
         //res.send(200, db.get(id));
     }
 
-    public getData(req : Request, res : Response, next?: Function) {
+    public getData(req: Request, res: Response, next?: Function) {
         let id = parseInt(req.params.id, 10);
         next();
         //res.send(200, "Hello" + +id); res.status(200).send( "Hello" + +id);
 
     }
 
-    public sendData(req : Request, res : Response, next?: Function) {
+    public sendData(req: Request, res: Response, next?: Function) {
         // First you need to create a connection to the db
-        var con = mssql.createConnection({host: "127.0.0.1", database: "mygalaxy", user: "root", password: "welcome", multipleStatements: true});
+        var con = mssql.createConnection({ host: "127.0.0.1", database: "mygalaxy", user: "root", password: "welcome", multipleStatements: true });
 
         con.connect(function (err) {
             if (err) {
@@ -1082,9 +1108,9 @@ export class Dbase extends EventEmitter {
         });
 
         con.query('SET @id="RR"; CALL sps_getUsers(@id)', function (err, rows) {
-            if (err) 
+            if (err)
                 throw err;
-            
+
             res
                 .status(200)
                 .send(JSON.stringify(rows[1]));
@@ -1149,8 +1175,8 @@ export const DB = new Dbase();
 export const DBRouter = Router();
 
 //DBRouter.post('/nycaps', DB.loadNycaps);
-DBRouter.post('/rules/executeSP', DB.executeSP);
-DBRouter.post('/rules', DB.executeSQl);
+DBRouter.post('/rules/executeSP', DB.execSP);
+DBRouter.post('/rules', DB.execSQl);
 DBRouter.post('/', DB.loadEmployees);
 
 /*

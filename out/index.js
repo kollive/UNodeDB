@@ -50,8 +50,9 @@ var GridFsStorage = require('multer-gridfs-storage');
 var Grid = require('gridfs-stream');
 Grid.mongo = mongoose.mongo;
 var gfs = Grid(conn.db);
+//added comment
 /*
-var winston = require('winston');
+var winston = require('winston');       bn mn
 require('winston-mssql');
 
 winston.add(winston.transports.mssql, {

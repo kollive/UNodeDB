@@ -102,7 +102,7 @@ var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
 passport.use(strategy);
 
 //const env = require("env.js");
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 4002;
 const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
